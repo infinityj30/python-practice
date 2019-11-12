@@ -1,6 +1,7 @@
 import argparse
 import shutil
 from pathlib import Path, PurePath
+import os
 
 '''
 Copies this_file to destination directory.  Uses the destination root specified as the second 
@@ -29,10 +30,24 @@ def copy_file(this_file):
             exit(1)
         print('Copied ', this_file, ' to ', dest_file_location)
 
+
+def check_create_directory(this_dir):
+    # this_file is the absolute path to the directory to be copied
+    # Build destination path for this_dir
+    dest_directory_location = PurePath.joinpath(dst_dir, PurePath(this_dir).relative_to(src_dir))
+    if not dest_directory_location.exists():
+        try:
+            os.mkdir(dest_directory_location)
+        except FileExistsError:
+            print ('Directory ', dest_directory_location, ' already exists.')
+            exit(1)
+
+
 def backup_directory(this_dir):
     for x in this_dir.iterdir():
         if x.is_dir():
-            # create this directory at destination
+            # if directory does not exist at destination, create this directory at destination
+            check_create_directory(x)
             # back up directory x
             backup_directory(x)
         else:
