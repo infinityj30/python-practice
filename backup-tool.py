@@ -32,6 +32,7 @@ def copy_file(this_file):
 def backup_directory(this_dir):
     for x in this_dir.iterdir():
         if x.is_dir():
+            # create this directory at destination
             # back up directory x
             backup_directory(x)
         else:
