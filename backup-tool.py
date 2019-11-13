@@ -9,6 +9,7 @@ parameter on command line.  Rest of the path is same as the relative path from s
 which is specified as the first parameter on the command line.
 '''
 def copy_file(this_file):
+    global count_files_backedup
     # this_file is the absolute path to the file to be copied
     # Build destination path for this_file
     dest_file_location = PurePath.joinpath(dst_dir, PurePath(this_file).relative_to(src_dir))
@@ -17,6 +18,15 @@ def copy_file(this_file):
         # Check if file at source was modified  more recently than the same file at destination
         if Path(this_file).stat().st_mtime > dest_file_location.stat().st_mtime:
             # copy from source to destination
+            try:
+                shutil.copyfile(this_file, dest_file_location)
+            except OSError:
+                print('Destination not writeable.  Cannot backup file.')
+                exit(1)
+            except shutil.SameFileError:
+                print('Source and destination cannot be the same.')
+                exit(1)
+            count_files_backedup += 1
             print ('Copying more recent ', this_file, ' to ', dest_file_location)
     else:
         # File does not exist at destination, so copy it form source
@@ -28,6 +38,7 @@ def copy_file(this_file):
         except shutil.SameFileError:
             print ('Source and destination cannot be the same.')
             exit(1)
+        count_files_backedup += 1
         print('Copied ', this_file, ' to ', dest_file_location)
 
 
@@ -44,6 +55,7 @@ def check_create_directory(this_dir):
 
 
 def backup_directory(this_dir):
+    global count_files_processed
     for x in this_dir.iterdir():
         if x.is_dir():
             # if directory does not exist at destination, create this directory at destination
@@ -52,6 +64,7 @@ def backup_directory(this_dir):
             backup_directory(x)
         else:
             # x is a file
+            count_files_processed += 1
             copy_file(x)
             # dest_file_location = PurePath.joinpath(dst_dir, PurePath(x).relative_to(src_dir))
             # print ('File ', dest_file_location, ' last modified ', Path(x).stat().st_mtime)
@@ -84,4 +97,8 @@ if src_dir.samefile(dst_dir):
     print ('Source and destination directories can not be the same.')
     exit(1)
 
+count_files_processed = 0
+count_files_backedup = 0
 backup_directory(src_dir)
+print ('Total number of files processed = ', count_files_processed)
+print ('Total number of files backed up = ', count_files_backedup)
